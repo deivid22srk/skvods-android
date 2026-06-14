@@ -1,17 +1,1 @@
-android {
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-}
-
-apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
-dependencies {
-    implementation project(':capacitor-app')
-    implementation project(':capacitor-splash-screen')
-    implementation project(':capacitor-status-bar')
-}
-
-apply from: "../../node_modules/@capacitor/app/android/capacitor.build.gradle"
-apply from: "../../node_modules/@capacitor/splash-screen/android/capacitor.build.gradle"
-apply from: "../../node_modules/@capacitor/status-bar/android/capacitor.build.gradle"
+// Placeholder - not used in WebView-only build
