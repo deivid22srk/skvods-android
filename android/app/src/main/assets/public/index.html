@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>SKVods Proxy - Assista vídeos e lives dos seus streamers favoritos</title>
+  <meta name="description" content="Assista vídeos, lives e séries dos seus streamers favoritos de forma rápida e fluida com a interface otimizada SKVods Proxy.">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+  
+  <!-- Google Fonts (Outfit) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- HLS.js for .m3u8 streaming -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  
+  <!-- Toast Notifications -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <div class="app-container">
+    
+    <!-- Sidebar -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a href="/" class="logo-link">
+          <span class="logo-icon">✨</span>
+          <span class="logo-text">SKVods <small>Proxy</small></span>
+        </a>
+        <button class="icon-btn close-sidebar-btn" id="close-sidebar-btn" aria-label="Fechar Menu">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="/" class="nav-item active" data-page="home">
+          <i data-lucide="home"></i>
+          <span>Início</span>
+        </a>
+        <a href="/?tag=live" class="nav-item" data-page="lives" data-tag="live">
+          <i data-lucide="tv"></i>
+          <span>Lives</span>
+        </a>
+        <a href="/series" class="nav-item" data-page="series">
+          <i data-lucide="clapperboard"></i>
+          <span>Séries</span>
+        </a>
+        <a href="/?page=channels" class="nav-item" data-page="channels">
+          <i data-lucide="users"></i>
+          <span>Canais</span>
+        </a>
+        <a href="/history" class="nav-item" data-page="history">
+          <i data-lucide="history"></i>
+          <span>Histórico</span>
+        </a>
+        <a href="/favorites" class="nav-item" data-page="favorites">
+          <i data-lucide="star"></i>
+          <span>Favoritos</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-divider"></div>
+      
+      <div class="sidebar-section">
+        <h3 class="sidebar-section-title">Streamers Rápidos</h3>
+        <div class="streamer-list-mini" id="streamers-sidebar-list">
+          <div class="sidebar-loader"></div>
+        </div>
+      </div>
+      
+      <div class="sidebar-footer">
+        <button class="nav-item settings-trigger-btn" id="sidebar-settings-btn">
+          <i data-lucide="settings"></i>
+          <span>Configurações</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+      
+      <!-- Top Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="icon-btn menu-toggle-btn" id="menu-toggle-btn" aria-label="Abrir Menu">
+            <i data-lucide="menu"></i>
+          </button>
+          
+          <div class="header-title-container">
+            <h1 class="header-title" id="page-title">Início</h1>
+            <p class="header-subtitle" id="page-subtitle">Navegue pelos vídeos mais recentes</p>
+          </div>
+        </div>
+        
+        <div class="header-center">
+          <div class="search-box">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" id="search-input" placeholder="Pesquisar vídeos, streamers ou filmes..." autocomplete="off">
+            <button class="clear-search-btn" id="clear-search-btn" style="display: none;" aria-label="Limpar">
+              <i data-lucide="x"></i>
+            </button>
+            
+            <!-- Suggestions Dropdown -->
+            <div class="search-suggestions" id="search-suggestions"></div>
+          </div>
+          
+          <button class="btn btn-filter" id="filter-toggle-btn" aria-label="Filtros Avançados">
+            <i data-lucide="sliders-horizontal"></i>
+            <span>Filtros</span>
+          </button>
+        </div>
+        
+        <div class="header-right">
+          <button class="icon-btn header-action-btn" id="theme-toggle-btn" title="Alternar Tema">
+            <i data-lucide="moon" id="theme-icon"></i>
+          </button>
+          <button class="icon-btn header-action-btn" id="header-settings-btn" title="Configurações">
+            <i data-lucide="settings"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Advanced Filter Drawer -->
+      <div class="filter-drawer" id="filter-drawer">
+        <div class="filter-drawer-header">
+          <h3>Filtros Avançados</h3>
+          <button class="icon-btn" id="close-filters-btn"><i data-lucide="x"></i></button>
+        </div>
+        
+        <div class="filter-drawer-body">
+          <div class="filter-group">
+            <label class="filter-label">Streamer</label>
+            <div class="filter-options" id="filter-streamers">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+          
+          <div class="filter-group">
+            <label class="filter-label">Tipo / Categoria</label>
+            <div class="filter-options">
+              <button class="filter-chip active" data-type="all">Todos</button>
+              <button class="filter-chip" data-type="live">Apenas Lives</button>
+              <button class="filter-chip" data-type="filme">Apenas Filmes</button>
+              <button class="filter-chip" data-type="serie">Apenas Séries</button>
+            </div>
+          </div>
+          
+          <div class="filter-group">
+            <label class="filter-label">Ordenação</label>
+            <select class="filter-select" id="filter-sort">
+              <option value="recent">Mais Recentes</option>
+              <option value="views">Mais Populares (Views)</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="filter-drawer-footer">
+          <button class="btn btn-secondary" id="clear-filters-btn">Limpar Filtros</button>
+          <button class="btn btn-primary" id="apply-filters-btn">Aplicar</button>
+        </div>
+      </div>
+      
+      <!-- Drawer Overlay -->
+      <div class="drawer-overlay" id="drawer-overlay"></div>
+
+      <!-- Main Scrollable Content Area -->
+      <main class="content-body" id="content-body">
+        
+        <!-- Dashboard Content -->
+        <div class="dashboard-view" id="dashboard-view">
+          
+          <!-- Now Live Banner (Carousel-like UI) -->
+          <section class="live-banners-section" id="live-banners-section" style="display: none;">
+            <h2 class="section-title"><span class="badge badge-live">AO VIVO</span> Transmitindo Agora</h2>
+            <div class="live-channels-grid" id="live-channels-grid"></div>
+          </section>
+
+          <!-- Main Dynamic Section Header -->
+          <div class="content-heading">
+            <h2 class="section-title" id="grid-title">Vídeos Recentes</h2>
+            <div class="grid-actions">
+              <!-- Options if needed -->
+            </div>
+          </div>
+          
+          <!-- Video Cards Grid -->
+          <div class="videos-grid" id="videos-grid">
+            <!-- Skeleton cards show up here while loading -->
+          </div>
+          
+          <!-- Pagination -->
+          <div class="pagination-container" id="pagination-container" style="display: none;">
+            <button class="btn btn-icon" id="prev-page-btn" disabled><i data-lucide="chevron-left"></i> Anterior</button>
+            <span class="pagination-info" id="pagination-info">Página 1 de 10</span>
+            <button class="btn btn-icon" id="next-page-btn">Próxima <i data-lucide="chevron-right"></i></button>
+          </div>
+        </div>
+
+        <!-- Series View (when selected) -->
+        <div class="series-view" id="series-view" style="display: none;">
+          <h2 class="section-title">Séries e Temporadas</h2>
+          <div class="series-grid" id="series-grid"></div>
+        </div>
+
+        <!-- Channels View (when selected) -->
+        <div class="channels-view" id="channels-view" style="display: none;">
+          <h2 class="section-title">Canais Registrados</h2>
+          <div class="channels-grid" id="channels-grid"></div>
+        </div>
+        
+      </main>
+    </div>
+  </div>
+
+  <!-- Video Player Modal (Fullscreen Theater Mode) -->
+  <div class="player-modal" id="player-modal">
+    <div class="player-modal-content">
+      
+      <!-- Close Player -->
+      <button class="close-player-btn" id="close-player-btn" aria-label="Fechar Player">
+        <i data-lucide="x"></i>
+      </button>
+
+      <!-- Left Column: Video and Info -->
+      <div class="player-main">
+        <div class="video-container">
+          <video id="main-video" controls autoplay playsinline></video>
+          
+          <!-- Overlay Loading Spinner -->
+          <div class="video-loader" id="video-loader">
+            <div class="spinner"></div>
+            <p>Carregando stream...</p>
+          </div>
+        </div>
+        
+        <div class="video-info-card">
+          <div class="video-info-header">
+            <div class="video-info-meta">
+              <span class="video-info-badge" id="video-info-tag">LIVE</span>
+              <span class="video-info-views"><i data-lucide="eye"></i> <span id="video-info-views-count">0</span> views</span>
+              <span class="video-info-duration"><i data-lucide="clock"></i> <span id="video-info-duration-time">00:00</span></span>
+            </div>
+            
+            <div class="video-actions-bar">
+              <button class="action-btn" id="video-favorite-btn" title="Adicionar aos Favoritos">
+                <i data-lucide="star"></i> Favoritar
+              </button>
+              <button class="action-btn" id="video-share-btn" title="Copiar link do vídeo">
+                <i data-lucide="share-2"></i> Compartilhar
+              </button>
+            </div>
+          </div>
+          
+          <h2 class="video-info-title" id="video-info-title">Título do Vídeo</h2>
+          
+          <div class="video-streamer-info">
+            <img src="" alt="Avatar" id="video-info-avatar" class="streamer-avatar">
+            <div class="streamer-text">
+              <span class="streamer-name" id="video-info-streamer">Nome do Streamer</span>
+              <span class="streamer-sub">Streamer Oficial</span>
+            </div>
+            
+            <div class="streamer-socials" id="video-info-socials">
+              <!-- Dynamically populated links -->
+            </div>
+          </div>
+          
+          <!-- Description / Movie plot -->
+          <div class="video-description-box" id="video-description-box" style="display: none;">
+            <h4>Sinopse / Sobre</h4>
+            <p id="video-description-text"></p>
+          </div>
+          
+          <!-- IMDb Info (if available) -->
+          <div class="imdb-info-card" id="video-imdb-card" style="display: none;">
+            <div class="imdb-badge-rating">
+              <span class="imdb-logo">IMDb</span>
+              <span class="imdb-rating"><i data-lucide="star"></i> <strong id="video-imdb-rating">N/A</strong>/10</span>
+            </div>
+            
+            <div class="imdb-details">
+              <p><strong>Nome:</strong> <span id="video-imdb-title"></span></p>
+              <p><strong>Gêneros:</strong> <span id="video-imdb-genres"></span></p>
+              <p><strong>Lançamento:</strong> <span id="video-imdb-year"></span></p>
+              <p><strong>Enredo:</strong> <span id="video-imdb-plot"></span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Streams, Qualities & Info -->
+      <div class="player-sidebar">
+        <div class="sidebar-widget">
+          <h3 class="widget-title"><i data-lucide="server"></i> Servidores e Qualidades</h3>
+          <div class="streams-list" id="streams-list">
+            <!-- Dynamically populated stream buttons -->
+          </div>
+        </div>
+        
+        <!-- Internet Archive files inside the video -->
+        <div class="sidebar-widget" id="ia-files-widget" style="display: none;">
+          <h3 class="widget-title"><i data-lucide="archive"></i> Arquivos do Acervo</h3>
+          <div class="ia-files-list" id="ia-files-list">
+            <!-- List of MP4 sources -->
+          </div>
+        </div>
+
+        <!-- IMDb Timestamps in the video -->
+        <div class="sidebar-widget" id="imdb-timestamps-widget" style="display: none;">
+          <h3 class="widget-title"><i data-lucide="bookmark"></i> Filmes na Live</h3>
+          <div class="timestamps-list" id="imdb-timestamps-list">
+            <!-- Timestamps mapping to parts of the video -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="settings-modal" id="settings-modal">
+    <div class="settings-modal-content">
+      <div class="settings-header">
+        <h2><i data-lucide="settings"></i> Configurações</h2>
+        <button class="icon-btn" id="close-settings-btn"><i data-lucide="x"></i></button>
+      </div>
+      
+      <div class="settings-body">
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">Qualidade Padrão</span>
+            <span class="setting-desc">Selecione a qualidade inicial preferida para reprodução.</span>
+          </div>
+          <div class="setting-control">
+            <select class="settings-select" id="settings-default-quality">
+              <option value="auto">Automático (HLS)</option>
+              <option value="source">Fonte (Máxima)</option>
+              <option value="720p">720p (HD)</option>
+              <option value="360p">360p (Móvel)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">Reprodução Automática</span>
+            <span class="setting-desc">Iniciar o vídeo automaticamente ao abrir.</span>
+          </div>
+          <div class="setting-control">
+            <label class="switch">
+              <input type="checkbox" id="settings-autoplay" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-title">Limpar Histórico local</span>
+            <span class="setting-desc">Remove todos os vídeos assistidos do seu navegador.</span>
+          </div>
+          <div class="setting-control">
+            <button class="btn btn-danger btn-sm" id="clear-history-btn">Limpar</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="settings-footer">
+        <button class="btn btn-primary" id="save-settings-btn">Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Main Scripts -->
+  <script src="/app.js"></script>
+</body>
+</html>

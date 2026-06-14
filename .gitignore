@@ -1,0 +1,35 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Android
+android/app/build/
+android/.gradle/
+android/local.properties
+android/*.iml
+android/.idea/
+android/captures/
+android/.externalNativeBuild
+android/.cxx/
+
+# Capacitor
+ios/
+android/app/src/main/assets/public/**/*
+!android/app/src/main/assets/public/index.html
+!android/app/src/main/assets/public/style.css
+!android/app/src/main/assets/public/app.js
+
+# Build
+build/
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

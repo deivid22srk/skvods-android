@@ -1,0 +1,77 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+      with:
+        gradle-version: 8.2
+
+    - name: Create local.properties
+      run: |
+        echo "sdk.dir=$ANDROID_SDK_ROOT" >> android/local.properties
+
+    - name: Make gradlew executable
+      run: chmod +x android/gradlew
+
+    - name: Download Capacitor Android dependencies
+      run: |
+        mkdir -p android/app/libs
+        # Create capacitor-android aar structure
+        mkdir -p capacitor-android-tmp
+        cd capacitor-android-tmp
+        
+        # Download Capacitor Android AAR dependencies
+        curl -L -o capacitor-android.aar "https://repo1.maven.org/maven2/com/capacitorjs/core/6.0.0/core-6.0.0.aar" 2>/dev/null || true
+        curl -L -o capacitor-app.aar "https://repo1.maven.org/maven2/com/capacitorjs/app/6.0.0/app-6.0.0.aar" 2>/dev/null || true
+        curl -L -o capacitor-splash-screen.aar "https://repo1.maven.org/maven2/com/capacitorjs/splash-screen/6.0.0/splash-screen-6.0.0.aar" 2>/dev/null || true
+        curl -L -o capacitor-status-bar.aar "https://repo1.maven.org/maven2/com/capacitorjs/status-bar/6.0.0/status-bar-6.0.0.aar" 2>/dev/null || true
+        
+        # Also download required androidx dependencies
+        curl -L -o appcompat-1.6.1.aar "https://repo1.maven.org/maven2/androidx/appcompat/appcompat/1.6.1/appcompat-1.6.1.aar" 2>/dev/null || true
+        curl -L -o core-ktx-1.12.0.aar "https://repo1.maven.org/maven2/androidx/core/core-ktx/1.12.0/core-ktx-1.12.0.aar" 2>/dev/null || true
+        curl -L -o webkit-1.9.0.aar "https://repo1.maven.org/maven2/androidx/webkit/webkit/1.9.0/webkit-1.9.0.aar" 2>/dev/null || true
+        
+        cd ..
+
+    - name: Build with Gradle
+      working-directory: ./android
+      run: |
+        ./gradlew assembleDebug --no-daemon --stacktrace
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: skvods-proxy-debug-apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk
+        if-no-files-found: warn
+
+    - name: Upload Release APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: skvods-proxy-release-apk
+        path: android/app/build/outputs/apk/release/*.apk
+        if-no-files-found: ignore
