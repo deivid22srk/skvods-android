@@ -42,4 +42,4 @@ O workflow `build.yml` compila o APK automaticamente em cada push para a branch 
 
 ## Licença
 
-Projeto privado.
+Projeto privado.# Trigger build
